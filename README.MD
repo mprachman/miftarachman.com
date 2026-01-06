@@ -134,7 +134,7 @@ The website includes links to various academic profiles and services:
 
 ## License
 
-Copyright 2025 Mifta Rachman. All rights reserved.
+Copyright 2026 Mifta Rachman. All rights reserved.
 
 ## Contact
 
@@ -143,8 +143,8 @@ Email: mrachman@ugm.ac.id
 
 Institution: Universitas Gadjah Mada
 
-Office: Biological Sciences Building, Faculty of Biology, UGM
+Office: Faculty of Animal Science, UGM
 
 ---
 
-**Last Updated**: November 2025
+**Last Updated**: January 2026
