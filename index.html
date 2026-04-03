@@ -738,15 +738,17 @@
           const maxCount = Math.max(...points.map((point) => point.count), 1)
           const stepX = chartWidth / points.length
           const barWidth = Math.max(stepX * 0.48, 14)
-          const barRadius = 8
+          const minBarHeight = 6
 
           const ticks = Array.from(new Set([0, Math.ceil(maxCount / 2), maxCount]))
           const bars = points
             .map((point, index) => {
-              const barHeight = (point.count / maxCount) * chartHeight
+              const scaledBarHeight = (point.count / maxCount) * chartHeight
+              const barHeight = point.count > 0 ? Math.max(scaledBarHeight, minBarHeight) : 0
               const x = margin.left + index * stepX + (stepX - barWidth) / 2
               const y = margin.top + chartHeight - barHeight
               const delay = 70 * index
+              const barRadius = Math.min(8, barWidth / 2, barHeight / 2)
 
               return `
                 <g class="citation-bar-group">
@@ -830,6 +832,23 @@
             ${bars}
             ${xLabels}
           `
+
+          alignChartToLatest(animate)
+        }
+
+        function alignChartToLatest(animate) {
+          const shell = document.querySelector('.citation-chart-shell')
+          if (!shell) return
+
+          requestAnimationFrame(() => {
+            const target = Math.max(shell.scrollWidth - shell.clientWidth, 0)
+            if (target <= 0) return
+
+            shell.scrollTo({
+              left: target,
+              behavior: animate ? 'smooth' : 'auto',
+            })
+          })
         }
 
         async function hydrateScholarMetrics() {
