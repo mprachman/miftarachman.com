@@ -24,28 +24,22 @@ function normalizeRecentLabel(rawKey) {
   return label.charAt(0).toUpperCase() + label.slice(1)
 }
 
-function getMetricRow(table, matcher) {
-  return table.find((row) => {
-    const label = String(row?.name || row?.label || row?.metric || '').toLowerCase()
-    return matcher(label)
-  })
+function getMetricMap(table, keyName) {
+  const row = table.find((entry) => entry && typeof entry === 'object' && keyName in entry)
+  return row ? row[keyName] : null
 }
 
-function readCellValue(row, keyMatcher) {
-  if (!row || typeof row !== 'object') return null
+function readCellValue(metricMap, key) {
+  if (!metricMap || typeof metricMap !== 'object' || !key) return null
 
-  const entries = Object.entries(row)
-  const match = entries.find(([key]) => keyMatcher(key))
-  if (!match) return null
-
-  const value = Number.parseInt(match[1], 10)
+  const value = Number.parseInt(metricMap[key], 10)
   return Number.isFinite(value) ? value : null
 }
 
-function getRecentKey(row) {
-  if (!row || typeof row !== 'object') return null
+function getRecentKey(metricMap) {
+  if (!metricMap || typeof metricMap !== 'object') return null
 
-  return Object.keys(row).find((key) => /^since_/i.test(key)) || null
+  return Object.keys(metricMap).find((key) => /^since_/i.test(key)) || null
 }
 
 function normalizeYearlyGraph(graph) {
@@ -69,25 +63,27 @@ function normalizeScholarPayload(data) {
   const table = Array.isArray(data?.cited_by?.table) ? data.cited_by.table : []
   const graph = normalizeYearlyGraph(data?.cited_by?.graph)
 
-  const citationsRow = getMetricRow(table, (label) => label.includes('citation'))
-  const hIndexRow = getMetricRow(table, (label) => label.includes('h-index'))
-  const i10IndexRow = getMetricRow(table, (label) => label.includes('i10'))
+  const citationsMetric = getMetricMap(table, 'citations')
+  const hIndexMetric = getMetricMap(table, 'h_index')
+  const i10IndexMetric = getMetricMap(table, 'i10_index')
 
   const recentKey =
-    getRecentKey(citationsRow) || getRecentKey(hIndexRow) || getRecentKey(i10IndexRow)
+    getRecentKey(citationsMetric) ||
+    getRecentKey(hIndexMetric) ||
+    getRecentKey(i10IndexMetric)
 
   return {
     provider: 'serpapi',
     sourceUrl: SCHOLAR_SOURCE_URL,
     fetchedAt: new Date().toISOString(),
     metrics: {
-      citationsAll: readCellValue(citationsRow, (key) => key === 'all'),
-      citationsRecent: readCellValue(citationsRow, (key) => key === recentKey),
+      citationsAll: readCellValue(citationsMetric, 'all'),
+      citationsRecent: readCellValue(citationsMetric, recentKey),
       recentLabel: normalizeRecentLabel(recentKey),
-      hIndexAll: readCellValue(hIndexRow, (key) => key === 'all'),
-      hIndexRecent: readCellValue(hIndexRow, (key) => key === recentKey),
-      i10IndexAll: readCellValue(i10IndexRow, (key) => key === 'all'),
-      i10IndexRecent: readCellValue(i10IndexRow, (key) => key === recentKey),
+      hIndexAll: readCellValue(hIndexMetric, 'all'),
+      hIndexRecent: readCellValue(hIndexMetric, recentKey),
+      i10IndexAll: readCellValue(i10IndexMetric, 'all'),
+      i10IndexRecent: readCellValue(i10IndexMetric, recentKey),
     },
     yearlyCitations: graph,
   }
