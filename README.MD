@@ -59,7 +59,7 @@ Since this is a static website with no build process, development is straightfor
    cd miftarachman.com
    ```
 
-2. Open [index.html](index.html) directly in your browser:
+2. For a static-only preview, open [index.html](index.html) directly in your browser:
 
    ```bash
    open index.html  # macOS
@@ -68,7 +68,15 @@ Since this is a static website with no build process, development is straightfor
    # or simply double-click the file in your file explorer
    ```
 
-3. For a local server (optional but recommended):
+3. For the full local preview with live Scholar metrics and chart updates, run:
+
+   ```bash
+   node scripts/dev-server.mjs
+   ```
+
+   Then visit `http://localhost:8000`.
+
+4. For a generic local server without the `/api/scholar-metrics` endpoint:
 
    ```bash
    # Using Python 3
