@@ -466,7 +466,10 @@
                           </svg>
                         </div>
                       </div>
-                      <p class="text-sm italic">
+                      <p
+                        id="citation-static-source"
+                        class="text-sm italic"
+                      >
                         Source:
                         <a
                           href="https://scholar.google.com/citations?user=sGkie4YAAAAJ&amp;hl=en"
@@ -676,6 +679,13 @@
           node.dataset.state = state
         }
 
+        function toggleStaticSource(isVisible) {
+          const node = document.getElementById('citation-static-source')
+          if (!node) return
+
+          node.style.display = isVisible ? '' : 'none'
+        }
+
         function setMetricValue(name, value) {
           const node = document.querySelector(`[data-metric="${name}"]`)
           if (!node || typeof value !== 'number' || Number.isNaN(value)) return
@@ -838,12 +848,14 @@
             const payload = await response.json()
             updateMetricCards(payload.metrics)
             renderChart(payload.yearlyCitations || fallbackData.yearlyCitations, true)
+            toggleStaticSource(false)
 
             const fetchedAt = formatTimestamp(payload.fetchedAt)
             const suffix = fetchedAt ? ` Last synced ${fetchedAt}.` : ''
             setRefreshStatus(`Live Google Scholar data loaded.${suffix}`, 'success')
           } catch (error) {
             renderChart(fallbackData.yearlyCitations, false)
+            toggleStaticSource(true)
             setRefreshStatus(
               'Live refresh unavailable. Showing static snapshot.',
               'fallback'
