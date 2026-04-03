@@ -389,24 +389,81 @@
                     </h2>
                     <div class="mb-8">
                       <h3 class="subsection-title">Citation Metrics</h3>
-                      <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div class="border p-4 rounded">
-                          <div class="font-bold text-lg">66</div>
+                      <div
+                        id="citation-metrics-grid"
+                        class="grid grid-cols-2 gap-4 mb-4"
+                      >
+                        <div class="border p-4 rounded scholar-metric-card">
+                          <div
+                            class="font-bold text-lg scholar-metric-value"
+                            data-metric="citations-all"
+                          >
+                            74
+                          </div>
                           <p class="text-secondary text-sm">Total Citations</p>
                         </div>
-                        <div class="border p-4 rounded">
-                          <div class="font-bold text-lg">46</div>
-                          <p class="text-secondary text-sm">
-                            Citations since 2020
+                        <div class="border p-4 rounded scholar-metric-card">
+                          <div
+                            class="font-bold text-lg scholar-metric-value"
+                            data-metric="citations-recent"
+                          >
+                            55
+                          </div>
+                          <p
+                            class="text-secondary text-sm"
+                            data-metric-label="citations-recent"
+                          >
+                            Citations since 2021
                           </p>
                         </div>
-                        <div class="border p-4 rounded">
-                          <div class="font-bold text-lg">3</div>
+                        <div class="border p-4 rounded scholar-metric-card">
+                          <div
+                            class="font-bold text-lg scholar-metric-value"
+                            data-metric="hindex-all"
+                          >
+                            3
+                          </div>
                           <p class="text-secondary text-sm">h-index</p>
                         </div>
-                        <div class="border p-4 rounded">
-                          <div class="font-bold text-lg">2</div>
+                        <div class="border p-4 rounded scholar-metric-card">
+                          <div
+                            class="font-bold text-lg scholar-metric-value"
+                            data-metric="i10-all"
+                          >
+                            2
+                          </div>
                           <p class="text-secondary text-sm">i10-index</p>
+                        </div>
+                      </div>
+                      <div class="citation-progress-panel mb-4">
+                        <div class="citation-progress-header">
+                          <h4 class="citation-progress-title">
+                            Citation Progress
+                          </h4>
+                          <p
+                            id="citation-refresh-status"
+                            class="citation-refresh-status"
+                            aria-live="polite"
+                          >
+                            Showing static snapshot. Updating after page load.
+                          </p>
+                        </div>
+                        <div class="citation-chart-shell">
+                          <svg
+                            id="citation-chart"
+                            class="citation-chart"
+                            viewBox="0 0 720 280"
+                            role="img"
+                            aria-labelledby="citation-chart-title citation-chart-desc"
+                          >
+                            <title id="citation-chart-title">
+                              Citation progress by year
+                            </title>
+                            <desc id="citation-chart-desc">
+                              Bar chart showing yearly Google Scholar citation
+                              counts.
+                            </desc>
+                          </svg>
                         </div>
                       </div>
                       <p class="text-sm italic">
@@ -415,7 +472,7 @@
                           href="https://scholar.google.com/citations?user=sGkie4YAAAAJ&amp;hl=en"
                           target="_blank"
                           rel="noopener noreferrer"
-                          >Google Scholar, November 2025</a
+                          >Google Scholar static snapshot, April 2026</a
                         >
                       </p>
                     </div>
@@ -577,5 +634,231 @@
         </div>
       </div>
     </div>
+    <script>
+      ;(() => {
+        const scholarSourceUrl =
+          'https://scholar.google.com/citations?user=sGkie4YAAAAJ&hl=en'
+        const fallbackData = {
+          provider: 'static',
+          sourceUrl: scholarSourceUrl,
+          fetchedAt: '2026-04-03T12:31:09Z',
+          metrics: {
+            citationsAll: 74,
+            citationsRecent: 55,
+            recentLabel: 'Since 2021',
+            hIndexAll: 3,
+            hIndexRecent: 3,
+            i10IndexAll: 2,
+            i10IndexRecent: 2,
+          },
+          yearlyCitations: [
+            { year: 2014, count: 1 },
+            { year: 2015, count: 8 },
+            { year: 2016, count: 1 },
+            { year: 2017, count: 3 },
+            { year: 2018, count: 3 },
+            { year: 2019, count: 1 },
+            { year: 2020, count: 2 },
+            { year: 2021, count: 1 },
+            { year: 2022, count: 5 },
+            { year: 2023, count: 4 },
+            { year: 2024, count: 11 },
+            { year: 2025, count: 28 },
+            { year: 2026, count: 6 },
+          ],
+        }
+
+        function setRefreshStatus(message, state) {
+          const node = document.getElementById('citation-refresh-status')
+          if (!node) return
+
+          node.textContent = message
+          node.dataset.state = state
+        }
+
+        function setMetricValue(name, value) {
+          const node = document.querySelector(`[data-metric="${name}"]`)
+          if (!node || typeof value !== 'number' || Number.isNaN(value)) return
+          node.textContent = String(value)
+        }
+
+        function updateMetricCards(metrics) {
+          if (!metrics) return
+
+          setMetricValue('citations-all', metrics.citationsAll)
+          setMetricValue('citations-recent', metrics.citationsRecent)
+          setMetricValue('hindex-all', metrics.hIndexAll)
+          setMetricValue('i10-all', metrics.i10IndexAll)
+
+          const recentLabel = document.querySelector(
+            '[data-metric-label="citations-recent"]'
+          )
+          if (recentLabel && metrics.recentLabel) {
+            recentLabel.textContent = `Citations ${metrics.recentLabel.toLowerCase()}`
+          }
+
+          document
+            .querySelectorAll('.scholar-metric-card')
+            .forEach((card) => card.classList.add('is-hydrated'))
+        }
+
+        function formatTimestamp(value) {
+          if (!value) return ''
+          const date = new Date(value)
+          if (Number.isNaN(date.getTime())) return ''
+
+          return date.toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+          })
+        }
+
+        function renderChart(points, animate) {
+          const svg = document.getElementById('citation-chart')
+          if (!svg || !Array.isArray(points) || !points.length) return
+
+          const width = 720
+          const height = 280
+          const margin = { top: 20, right: 18, bottom: 52, left: 46 }
+          const chartWidth = width - margin.left - margin.right
+          const chartHeight = height - margin.top - margin.bottom
+          const maxCount = Math.max(...points.map((point) => point.count), 1)
+          const stepX = chartWidth / points.length
+          const barWidth = Math.max(stepX * 0.48, 14)
+          const barRadius = 8
+
+          const ticks = Array.from(new Set([0, Math.ceil(maxCount / 2), maxCount]))
+          const bars = points
+            .map((point, index) => {
+              const barHeight = (point.count / maxCount) * chartHeight
+              const x = margin.left + index * stepX + (stepX - barWidth) / 2
+              const y = margin.top + chartHeight - barHeight
+              const delay = 70 * index
+
+              return `
+                <g class="citation-bar-group">
+                  <rect
+                    class="citation-bar${animate ? ' is-animated' : ''}"
+                    x="${x.toFixed(2)}"
+                    y="${y.toFixed(2)}"
+                    width="${barWidth.toFixed(2)}"
+                    height="${barHeight.toFixed(2)}"
+                    rx="${barRadius}"
+                    ry="${barRadius}"
+                    style="--bar-delay:${delay}ms"
+                  ></rect>
+                  <text
+                    class="citation-bar-value${animate ? ' is-animated' : ''}"
+                    x="${(x + barWidth / 2).toFixed(2)}"
+                    y="${Math.max(y - 10, margin.top + 10).toFixed(2)}"
+                    text-anchor="middle"
+                    style="--bar-delay:${delay + 80}ms"
+                  >
+                    ${point.count}
+                  </text>
+                </g>
+              `
+            })
+            .join('')
+
+          const xLabels = points
+            .map((point, index) => {
+              const x = margin.left + index * stepX + stepX / 2
+              return `
+                <text
+                  class="citation-axis-label"
+                  x="${x.toFixed(2)}"
+                  y="${height - 20}"
+                  text-anchor="middle"
+                >
+                  ${point.year}
+                </text>
+              `
+            })
+            .join('')
+
+          const yTicks = ticks
+            .map((tick) => {
+              const y = margin.top + chartHeight - (tick / maxCount) * chartHeight
+              return `
+                <g>
+                  <line
+                    class="citation-grid-line"
+                    x1="${margin.left}"
+                    y1="${y.toFixed(2)}"
+                    x2="${width - margin.right}"
+                    y2="${y.toFixed(2)}"
+                  ></line>
+                  <text
+                    class="citation-axis-label"
+                    x="${margin.left - 12}"
+                    y="${(y + 4).toFixed(2)}"
+                    text-anchor="end"
+                  >
+                    ${tick}
+                  </text>
+                </g>
+              `
+            })
+            .join('')
+
+          svg.innerHTML = `
+            <title id="citation-chart-title">Citation progress by year</title>
+            <desc id="citation-chart-desc">Bar chart showing yearly Google Scholar citation counts.</desc>
+            <defs>
+              <linearGradient id="citation-bar-gradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="rgb(37, 99, 235)" stop-opacity="0.92"></stop>
+                <stop offset="100%" stop-color="rgb(14, 116, 144)" stop-opacity="0.72"></stop>
+              </linearGradient>
+            </defs>
+            <rect class="citation-chart-backdrop" x="0" y="0" width="${width}" height="${height}" rx="20" ry="20"></rect>
+            ${yTicks}
+            <line class="citation-axis-line" x1="${margin.left}" y1="${margin.top + chartHeight}" x2="${width - margin.right}" y2="${margin.top + chartHeight}"></line>
+            ${bars}
+            ${xLabels}
+          `
+        }
+
+        async function hydrateScholarMetrics() {
+          renderChart(fallbackData.yearlyCitations, false)
+          updateMetricCards(fallbackData.metrics)
+
+          try {
+            const response = await fetch('/api/scholar-metrics', {
+              headers: { Accept: 'application/json' },
+            })
+
+            if (!response.ok) {
+              throw new Error(`Request failed with ${response.status}`)
+            }
+
+            const payload = await response.json()
+            updateMetricCards(payload.metrics)
+            renderChart(payload.yearlyCitations || fallbackData.yearlyCitations, true)
+
+            const fetchedAt = formatTimestamp(payload.fetchedAt)
+            const suffix = fetchedAt ? ` Last synced ${fetchedAt}.` : ''
+            setRefreshStatus(`Live Google Scholar data loaded.${suffix}`, 'success')
+          } catch (error) {
+            renderChart(fallbackData.yearlyCitations, false)
+            setRefreshStatus(
+              'Live refresh unavailable. Showing static snapshot.',
+              'fallback'
+            )
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', hydrateScholarMetrics, {
+            once: true,
+          })
+        } else {
+          hydrateScholarMetrics()
+        }
+      })()
+    </script>
   </body>
 </html>
